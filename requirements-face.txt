@@ -1,0 +1,7 @@
+# CIPHER Vision / ArcFace installation
+# InsightFace 2.0 ships a normal Python wheel and does not compile the optional
+# face3d extension during standard installation, so MSVC is not required for it.
+numpy>=1.26,<3
+insightface==2.0
+onnxruntime>=1.18,<2
+opencv-python-headless>=4.10,<6

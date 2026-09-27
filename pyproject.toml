@@ -1,0 +1,16 @@
+[project]
+name = "cipher-python-only"
+version = "2.3.0"
+description = "CIPHER criminal intelligence platform - FastAPI backend with SQLite/PostgreSQL support"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "python-multipart>=0.0.9,<1",
+  "aiofiles>=23.2,<25",
+  "requests>=2.31,<3",
+  "python-dotenv>=1.0,<2",
+  "psycopg2-binary>=2.9,<3",
+  "pymupdf>=1.24,<2",
+  "certifi>=2024.7.4,<2027",
+]

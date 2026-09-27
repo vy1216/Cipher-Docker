@@ -1,0 +1,12 @@
+# CIPHER local RAG + production face-recognition runtime
+sentence-transformers>=3.0,<6
+faiss-cpu>=1.8,<2
+# 2.0 is the current InsightFace release and ships a Python wheel; the optional
+# face3d extension is not compiled during normal installation.
+insightface==2.0
+onnxruntime>=1.18,<2
+# Keep compatibility with both current OpenCV 4.x and 5.x wheels.
+opencv-python-headless>=4.10,<6
+python-docx>=1.1,<2
+Pillow>=10,<13
+pytesseract>=0.3.10,<0.4

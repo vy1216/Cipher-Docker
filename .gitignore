@@ -1,0 +1,120 @@
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local databases / runtime state
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+uploads/
+logs/
+tmp/
+temp/
+data/rag/*
+!data/rag/.gitkeep
+
+# Generated AI / model caches
+.huggingface/
+.cache/
+.cache-huggingface/
+insightface/
+*.onnx
+*.safetensors
+*.bin
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node / frontend build output (CIPHER frontend is static source)
+node_modules/
+dist/
+build/
+.npm/
+
+# Test / generated artifacts
+*.log
+*.tmp
+*.bak
+backend_hashes.txt
+
+# Credentials / certificates
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Local deployment helper scripts
+START_CIPHER*.bat
+STOP_CIPHER*.bat
+run_python_backend.bat
+setup_and_start.ps1
+INSTALL_ARCFACE.bat
+patch*.py
+
+# Production/runtime secrets and data
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+uploads/
+data/rag/*
+*.log
+*.tmp
+*.bak
+
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# ML model/cache directories
+.insightface/
+models/
+model_cache/
+hf_cache/
+.cache/
+.cache/huggingface/
+.cache/torch/
+
+# Local tooling / QA scripts
+*.bat
+*.ps1
+patch*.py
+verify_*.py
+qa_*.py
+*_test.py
+
+# Build/deployment artifacts
+*.zip
+Dockerfile.*
+docker-compose.override.yml
