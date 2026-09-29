@@ -9354,8 +9354,8 @@ function getCipherActiveCaseId() {
    Co-pilot interface, deterministic provenance, review queue, & contextual queries
    ============================================================================= */
 (function initAIInvestigatorSubsystem() {
-  const DEFAULT_CASE_ID = 1;
-  let activeCaseId = DEFAULT_CASE_ID;
+  const DEFAULT_CASE_ID = 0;
+  let activeCaseId = 0;
   let currentConversationId = null;
   let loadingInterval = null;
 
@@ -9377,12 +9377,20 @@ function getCipherActiveCaseId() {
 
   // Exposed globally for view switches
   window.refreshAIActivity = async function() {
-    try {
-      const res = await fetch(`/api/cases/${activeCaseId}/ai/activity`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
+  try {
+    const selectedCaseId = Number(window.CipherCaseState?.id || 0);
+
+    if (!selectedCaseId || !window.CipherCaseState?.caseSelected) {
+      return;
+    }
+
+    activeCaseId = selectedCaseId;
+
+    const res = await fetch(`/api/cases/${activeCaseId}/ai/activity`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) return;
       
       const statSuggestions = document.getElementById("aiStatSuggestions");
       const statDuplicates = document.getElementById("aiStatDuplicates");
@@ -9406,13 +9414,22 @@ function getCipherActiveCaseId() {
   };
 
   async function loadPendingSuggestions() {
-    const container = document.getElementById("aiPendingSuggestionsList");
-    if (!container) return;
+  const container = document.getElementById("aiPendingSuggestionsList");
+  if (!container) return;
 
-    try {
-      const res = await fetch(`/api/cases/${activeCaseId}/ai/suggestions?status=PENDING`, {
-        headers: getAuthHeaders(),
-      });
+  const selectedCaseId = Number(window.CipherCaseState?.id || 0);
+
+  if (!selectedCaseId || !window.CipherCaseState?.caseSelected) {
+    return;
+  }
+
+  activeCaseId = selectedCaseId;
+
+  try {
+    const res = await fetch(`/api/cases/${activeCaseId}/ai/suggestions?status=PENDING`, {
+      headers: getAuthHeaders(),
+    });
+
       if (!res.ok) return;
       const resData = await res.json();
       const suggestions = Array.isArray(resData) ? resData : (resData.suggestions || resData.data || []);
@@ -10002,8 +10019,8 @@ function getCipherActiveCaseId() {
    Human-in-the-loop verification, diff inspector, bulk review, and audit trail
    ============================================================================= */
 (function initReviewSubsystem() {
-  const DEFAULT_CASE_ID = 1;
-  let activeCaseId = DEFAULT_CASE_ID;
+  const DEFAULT_CASE_ID = 0;
+  let activeCaseId = 0;
   let reviewItems = [];
   let activeItem = null;
   let selectedItemIds = new Set();
@@ -10073,12 +10090,20 @@ function getCipherActiveCaseId() {
 
   // Load Review Workspace
   window.loadReviewWorkspace = async function() {
-    try {
-      activeCaseId = Number(window.CipherCaseState?.id || activeCaseId || DEFAULT_CASE_ID);
-      const kickerEl = document.getElementById("reviewCaseKicker");
-      if (kickerEl) kickerEl.textContent = `CASE / C-2026-0${activeCaseId}`;
+  try {
+    const selectedCaseId = Number(window.CipherCaseState?.id || 0);
 
-      let url = `/cases/${activeCaseId}/review?status=${encodeURIComponent(currentStatusFilter)}`;
+    if (!selectedCaseId || !window.CipherCaseState?.caseSelected) {
+      console.warn("[Review Subsystem] No active case selected.");
+      return;
+    }
+
+    activeCaseId = selectedCaseId;
+
+    const kickerEl = document.getElementById("reviewCaseKicker");
+    if (kickerEl) kickerEl.textContent = `CASE / C-2026-0${activeCaseId}`;
+
+    let url = `/api/cases/${activeCaseId}/review?status=${encodeURIComponent(currentStatusFilter)}`;
       if (currentTypeFilter !== "ALL") {
         url += `&type=${encodeURIComponent(currentTypeFilter)}`;
       }
@@ -10086,8 +10111,21 @@ function getCipherActiveCaseId() {
         url += `&search=${encodeURIComponent(currentSearchQuery.trim())}`;
       }
 
-      const res = await fetch(url, { headers: getAuthHeaders() });
-      if (!res.ok) throw new Error("Failed to load review queue");
+    const res = await fetch(url, { headers: getAuthHeaders() });
+
+if (!res.ok) {
+  const errorText = await res.text();
+
+  console.error(
+    "[Review Subsystem] API Error:",
+    res.status,
+    errorText
+  );
+
+  throw new Error(
+    `Review API failed (${res.status}): ${errorText}`
+  );
+}
       const data = await res.json();
 
       reviewItems = data.items || [];
@@ -10165,15 +10203,30 @@ function getCipherActiveCaseId() {
     }
   }
   window.refreshReviewBadge = async function() {
-    try {
-      const res = await fetch(`/api/cases/${window.CipherCaseState?.id || activeCaseId}/review?status=PENDING`, { headers: getAuthHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const pendingCount = data.summary?.pending ?? data.total ?? 0;
-        updateSidebarBadge(pendingCount);
-      }
-    } catch (e) {}
-  };
+  try {
+    const selectedCaseId = Number(window.CipherCaseState?.id || 0);
+
+    if (!selectedCaseId || !window.CipherCaseState?.caseSelected) {
+      updateSidebarBadge(0);
+      return;
+    }
+
+    activeCaseId = selectedCaseId;
+
+    const res = await fetch(
+      `/api/cases/${activeCaseId}/review?status=PENDING`,
+      { headers: getAuthHeaders() }
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      const pendingCount = data.summary?.pending ?? data.total ?? 0;
+      updateSidebarBadge(pendingCount);
+    }
+  } catch (e) {
+    console.warn("[Review Subsystem] Failed to refresh badge:", e);
+  }
+};
 
   function populateSourceDropdown() {
     const select = document.getElementById("reviewSourceSelect");

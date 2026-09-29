@@ -55,15 +55,25 @@
       // A stale JWT (for example after a local database reset) must not leave
       // the workspace half-loaded. Clear only investigation-route auth; do not
       // treat an intentionally failed login/register request as session expiry.
-      if (response.status === 401 && isProtected && !parsedPath.endsWith("/auth/login") && !parsedPath.endsWith("/auth/register")) {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem("token");
-        localStorage.removeItem("cipher_user");
-        sessionStorage.removeItem(TOKEN_KEY);
-        state.id = 0;
-        state.caseNumber = "";
-        window.dispatchEvent(new CustomEvent("cipher:auth-expired"));
+      if (
+  response.status === 401 &&
+  isProtected &&
+  !parsedPath.endsWith("/auth/login") &&
+  !parsedPath.endsWith("/auth/register")
+) {
+  console.warn(
+    "[CIPHER Auth] Protected request returned 401:",
+    parsedPath
+  );
+
+  window.dispatchEvent(
+    new CustomEvent("cipher:auth-required", {
+      detail: {
+        path: parsedPath
       }
+    })
+  );
+}
       return response;
     });
   };
@@ -400,9 +410,16 @@
   }
 
   async function refreshReview() {
-    if(!state.id) return;
-    try { window.dispatchEvent(new CustomEvent("cipher:review-refresh")); } catch {}
+  if (!state.caseSelected || !state.id) return;
+
+  try {
+    if (typeof window.loadReviewWorkspace === "function") {
+      await window.loadReviewWorkspace();
+    }
+  } catch (e) {
+    console.warn("[Runtime] Review refresh failed:", e);
   }
+}
 
   async function refreshNetwork() {
     try {
@@ -436,16 +453,20 @@
   }
 
   async function refreshAll(){
-    // These views are independent. Refresh them in parallel so navigating a case
-    // does not serialize multiple backend/network requests.
-    await Promise.allSettled([
-      refreshEvidence(),
-      refreshNetwork(),
-      refreshGIS(),
-      renderDynamicTimeline(),
-      refreshReview(),
-    ]);
+  if (!state.caseSelected || !state.id) {
+    return;
   }
+
+  // These views are independent. Refresh them in parallel so navigating a case
+  // does not serialize multiple backend/network requests.
+  await Promise.allSettled([
+    refreshEvidence(),
+    refreshNetwork(),
+    refreshGIS(),
+    renderDynamicTimeline(),
+    refreshReview(),
+  ]);
+}
 
   // Review buttons in the existing UI are kept; this just refreshes all dependent views after a decision.
   document.addEventListener("click", e=>{
