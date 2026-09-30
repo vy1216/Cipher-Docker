@@ -200,14 +200,63 @@ def _chunks(text: str, size: int | None = None, overlap: int | None = None) -> l
 
 @lru_cache(maxsize=2)
 def _embedder():
-    model_name = os.getenv("CIPHER_EMBEDDING_MODEL", "all-MiniLM-L6-v2").strip() or "all-MiniLM-L6-v2"
+    """
+    Select the RAG embedding provider.
+
+    CIPHER_RAG_EMBEDDING_PROVIDER:
+      - auto: try SentenceTransformer, then fall back to TF-IDF
+      - sentence-transformers: use SentenceTransformer only
+      - tfidf: use lightweight local TF-IDF
+
+    Render Free should use TF-IDF because the instance has a 512 MB
+    memory limit. Local/high-memory environments can continue using
+    SentenceTransformer.
+    """
+    provider_mode = (
+        os.getenv("CIPHER_RAG_EMBEDDING_PROVIDER", "auto")
+        .strip()
+        .lower()
+    )
+
+    model_name = (
+        os.getenv("CIPHER_EMBEDDING_MODEL", "all-MiniLM-L6-v2").strip()
+        or "all-MiniLM-L6-v2"
+    )
+
+    if provider_mode in {"tfidf", "tf-idf", "local-tfidf"}:
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
+        return (
+            "tfidf",
+            "tfidf-local",
+            TfidfVectorizer(
+                lowercase=True,
+                ngram_range=(1, 2),
+                max_features=8192,
+                norm="l2",
+            ),
+        )
+
     try:
         from sentence_transformers import SentenceTransformer
+
         model = SentenceTransformer(model_name)
+
         return "sentence-transformers", model_name, model
+
     except Exception:
         from sklearn.feature_extraction.text import TfidfVectorizer
-        return "tfidf", "tfidf-local", TfidfVectorizer(lowercase=True, ngram_range=(1, 2), max_features=8192, norm="l2")
+
+        return (
+            "tfidf",
+            "tfidf-local",
+            TfidfVectorizer(
+                lowercase=True,
+                ngram_range=(1, 2),
+                max_features=8192,
+                norm="l2",
+            ),
+        )
 
 
 def _embed_texts(texts: list[str]) -> tuple[str, str, np.ndarray]:

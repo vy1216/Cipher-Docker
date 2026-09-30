@@ -2722,7 +2722,7 @@ async def ai_query(case_id: int, request: Request, user: dict = Depends(get_curr
 
     conn = get_db()
     conn.execute("INSERT INTO ai_messages (conversation_id, role, message, answer_type, payload_json) VALUES (?, 'assistant', ?, ?, ?)",
-                 (conversation_id, ai_response["answer"], ai_response["answer_type"], json.dumps(ai_response)))
+                 (conversation_id, ai_response["answer"], ai_response["answer_type"], json.dumps(ai_response, default=str)))
     conn.commit()
     conn.close()
 
